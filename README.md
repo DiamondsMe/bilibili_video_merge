@@ -1,4 +1,7 @@
 # bilibili_video_merge
-阿b视频缓存转换，利用nodejs合并m4s，目前只适用于安卓缓存文件
+bilibili视频缓存批量转换，利用nodejs合并m4s，目前支持安卓、windows中的缓存文件
 
+1.安装ffmpeg
+
+2.在run所在目录输入以下命令：
 `node run.js`
