@@ -28,7 +28,8 @@ function processFolderRecursively(folderPath) {
                     const ownerId = jsonData.uid;
                     const ownerName = jsonData.uname;
                     const bvid = jsonData.bvid;
-                    const title = jsonData.groupTitle;
+                    const groupTitle = jsonData.groupTitle;
+                    const title = jsonData.title;
                     const cid = jsonData.cid;
 
                     const parentFolder = `${folderPath}/${cid}`;
@@ -36,7 +37,7 @@ function processFolderRecursively(folderPath) {
                     const audioPath = `${folderPath}/${cid}-1-30280.m4s`;
                     const videoPath2 = `${folderPath}/${cid}_ex1-1-30064.m4s`;
                     const audioPath2 = `${folderPath}/${cid}_ex1-1-30280.m4s`;
-                    const outputPath = `./output/${ownerId}_${ownerName}_${bvid}_${title}.mp4`;
+                    const outputPath = `./output/${ownerId}_${ownerName}_${bvid}_${title !== groupTitle ? `${groupTitle}_${title}` : `${groupTitle}`}.mp4`;
 
                     const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${audioPath}" -c:v copy -c:a copy -y "${outputPath}"`;
                     child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
@@ -44,7 +45,7 @@ function processFolderRecursively(folderPath) {
                             // console.error('Error running ffmpeg:', err);
                             console.error('Error running ffmpeg, try2:', videoPath, outputPath);
                             const ffmpegCommand = `ffmpeg -i "${videoPath2}" -i "${audioPath2}" -c:v copy -c:a copy -y "${outputPath}"`;
-                            
+
                             child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
                                 if (err) {
                                     // console.error('Error running ffmpeg:', err);
@@ -66,7 +67,7 @@ function processFolderRecursively(folderPath) {
 
 function move(pathFrom, pathTo) {
     const ffmpegCommand = `move "${pathFrom}" "${audioPath2}"`;
-                            
+
     child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
         if (err) {
             console.error('Error move:', err);
