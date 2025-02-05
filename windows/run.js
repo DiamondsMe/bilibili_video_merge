@@ -7,11 +7,21 @@ function processFolderRecursively(folderPath) {
             console.error(err);
             return;
         }
-        let thirdPath = ''
+        let videoPath = ''
+        let audioPath = ''
+
         items.forEach(item => {
             const itemPath = `${folderPath}/${item}`;
             if (fs.statSync(itemPath).isDirectory()) {
                 processFolderRecursively(itemPath);
+            } else if (item.endsWith('.m4s')) {
+                console.log(item)
+                if (['30064', '100048'].find((v)=>item.indexOf(v) > -1)) {
+                    videoPath = itemPath
+                }
+                if (['30280'].find((v)=>item.indexOf(v) > -1)) {
+                    audioPath = itemPath
+                }
             } else if (item.endsWith('videoInfo.json')) {
                 fs.readFile(itemPath, 'utf8', (err, data) => {
                     if (err) {
@@ -28,35 +38,23 @@ function processFolderRecursively(folderPath) {
                     const ownerId = jsonData.uid;
                     const ownerName = jsonData.uname;
                     const bvid = jsonData.bvid;
-                    const groupTitle = jsonData.groupTitle;
-                    const title = jsonData.title;
+                    const groupTitle = jsonData.groupTitle.replace(/\/|\|/g, '_'));
+                    const title = jsonData.title.replace(/\/|\|/g, '_');
                     const cid = jsonData.cid;
 
                     const parentFolder = `${folderPath}/${cid}`;
-                    const videoPath = `${folderPath}/${cid}-1-30064.m4s`;
-                    const audioPath = `${folderPath}/${cid}-1-30280.m4s`;
-                    const videoPath2 = `${folderPath}/${cid}_ex1-1-30064.m4s`;
-                    const audioPath2 = `${folderPath}/${cid}_ex1-1-30280.m4s`;
+
                     const outputPath = `./output/${ownerId}_${ownerName}_${bvid}_${title !== groupTitle ? `${groupTitle}_${title}` : `${groupTitle}`}.mp4`;
 
-                    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${audioPath}" -c:v copy -c:a copy -y "${outputPath}"`;
+                    const ffmpegCommand = `ffmpeg -i "${videoPath}" ${audioPath ? `-i "${audioPath}"` : ''} -c:v copy -c:a copy -y "${outputPath}"`;
                     child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
                         if (err) {
-                            // console.error('Error running ffmpeg:', err);
-                            console.error('Error running ffmpeg, try2:', videoPath, outputPath);
-                            const ffmpegCommand = `ffmpeg -i "${videoPath2}" -i "${audioPath2}" -c:v copy -c:a copy -y "${outputPath}"`;
-
-                            child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
-                                if (err) {
-                                    // console.error('Error running ffmpeg:', err);
-                                    console.error('Error try2 running ffmpeg:', videoPath2, outputPath);
-                                    move(folderPath, './unsuccess')
-                                } else {
-                                    console.log(`${outputPath}FFmpeg try2 command executed successfully.`);
-                                }
-                            });
+                            // console.error(err);
+                            console.error('Error running ffmpeg', videoPath, outputPath);
+                            move(folderPath.split('/').slice(0, 3).join('/'), './unsuccess')
                         } else {
                             console.log(`${outputPath}FFmpeg command executed successfully.`);
+                            move(folderPath.split('/').slice(0, 3).join('/'), './success')
                         }
                     });
                 });
@@ -66,7 +64,7 @@ function processFolderRecursively(folderPath) {
 }
 
 function move(pathFrom, pathTo) {
-    const ffmpegCommand = `move "${pathFrom}" "${audioPath2}"`;
+    const ffmpegCommand = `move "${pathFrom}" "${pathTo}"`;
 
     child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
         if (err) {

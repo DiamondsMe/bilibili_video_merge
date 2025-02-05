@@ -32,25 +32,47 @@ function processFolderRecursively(folderPath) {
                     }
                     const ownerId = jsonData.owner_id;
                     const ownerName = jsonData.owner_name;
-                    const title = jsonData.title;
+                    const title = jsonData.title.replace(/\/|\|/g, '_');
                     const bvid = jsonData.bvid;
 
                     const parentFolder = thirdPath;
                     const videoPath = `${parentFolder}/video.m4s`;
                     const audioPath = `${parentFolder}/audio.m4s`;
-                    const outputPath = `./putput/${ownerId}_${ownerName}_${title}.mp4`;
+                    const outputPath = `./output/${ownerId}_${ownerName}_${title}.mp4`;
 
-                    const ffmpegCommand = `ffmpeg -i "${videoPath}" -i "${audioPath}" -codec copy "${outputPath}"`;
+                    const ffmpegCommand = `ffmpeg -i "${videoPath}" ${audioPath ? `-i "${audioPath}"` : ''} -c:v copy -c:a copy -y "${outputPath}"`;
                     child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
                         if (err) {
+                            // console.error(err);
                             console.error('Error running ffmpeg:', thirdPath, outputPath);
+                            const ffmpegCommand2 = `ffmpeg -i "${videoPath}" -c:v copy -y "${outputPath}"`;
+                            child_process.exec(ffmpegCommand2, (err, stdout, stderr) => {
+                                if (err) {
+                                    console.error('Error running2 ffmpeg:', thirdPath, outputPath);
+                                    move(folderPath.split('/').slice(0, 3).join('/'), './unsuccess')
+                                } else {
+                                    console.log(`${outputPath}FFmpeg command2 executed successfully.`);
+                                    move(folderPath.split('/').slice(0, 3).join('/'), './success')
+                                }
+                            });
                         } else {
                             console.log(`${outputPath}FFmpeg command executed successfully.`);
+                            move(folderPath.split('/').slice(0, 3).join('/'), './success')
                         }
                     });
                 });
             }
         });
+    });
+}
+
+function move(pathFrom, pathTo) {
+    const ffmpegCommand = `move "${pathFrom}" "${pathTo}"`;
+
+    child_process.exec(ffmpegCommand, (err, stdout, stderr) => {
+        if (err) {
+            console.error('Error move:', err);
+        }
     });
 }
 
